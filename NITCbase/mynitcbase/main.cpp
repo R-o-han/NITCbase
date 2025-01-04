@@ -3,6 +3,7 @@
 #include "Disk_Class/Disk.h"
 #include "FrontendInterface/FrontendInterface.h"
 #include <bits/stdc++.h>
+#include <cstring>
 using namespace std;
 
 int main(int argc, char *argv[]) {
