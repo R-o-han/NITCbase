@@ -73,15 +73,33 @@ void updateAttributeName(const char* relName, const char* oldAttrName, const cha
     }
   }
   
+  
 }
 
-
+void checkUsedBlock(){
+ unsigned char buffer[BLOCK_SIZE];
+ Disk::readBlock(buffer,0);
+ for(int i=0;i<BLOCK_SIZE;i++){
+  switch((int)buffer[i]){
+    case 0:cout<<i<<": Record Block\n";
+    break;
+    case 1:cout<<i<<": Internal Index Block\n";
+    break;
+    case 2:cout<<i<<": Leaf Index Block\n";
+    break;
+    case 4:cout<<i<<": Block Allocation Map\n";
+    break;
+  }
+ }
+}
 int main(int argc, char *argv[]) {
   /* Initialize the Run Copy of Disk */
   
   Disk disk_run;
  printAttributeCatalog();
+  checkUsedBlock();
   // updateAttributeName("Students","Class","Batch");
   // printAttributeCatalog();
   
 }
+
