@@ -1,6 +1,7 @@
 #include "RelCacheTable.h"
 
 #include <cstring>
+#include <stdlib.h>
 
 RelCacheEntry *RelCacheTable::relCache[MAX_OPEN];
 /*
@@ -44,4 +45,51 @@ void RelCacheTable::recordToRelCatEntry(union Attribute record[RELCAT_NO_ATTRS],
     relCatEntry->firstBlk = (int)record[RELCAT_FIRST_BLOCK_INDEX].nVal;
     relCatEntry->lastBlk = (int)record[RELCAT_LAST_BLOCK_INDEX].nVal;
     relCatEntry->numSlotsPerBlk = (int)record[RELCAT_NO_SLOTS_PER_BLOCK_INDEX].nVal;
+}
+
+/* will return the searchIndex for the relation corresponding to `relId
+NOTE: this function expects the caller to allocate memory for `*searchIndex`
+*/
+int RelCacheTable::getSearchIndex(int relId, RecId *searchIndex)
+{
+    // check if 0 <= relId < MAX_OPEN and return E_OUTOFBOUND otherwise
+    if (relId < 0 || relId >= MAX_OPEN)
+    {
+        return E_OUTOFBOUND;
+    }
+    // check if relCache[relId] == nullptr and return E_RELNOTOPEN if true
+    if (relCache[relId] == nullptr)
+    {
+        return E_RELNOTOPEN;
+    }
+    // copy the searchIndex field of the Relation Cache entry corresponding
+    //   to input relId to the searchIndex variable.
+    *searchIndex = relCache[relId]->searchIndex;
+    return SUCCESS;
+}
+// sets the searchIndex for the relation corresponding to relId
+int RelCacheTable::setSearchIndex(int relId, RecId *searchIndex)
+{
+    // check if 0 <= relId < MAX_OPEN and return E_OUTOFBOUND otherwise
+    if (relId < 0 || relId >= MAX_OPEN)
+    {
+        return E_OUTOFBOUND;
+    }
+    // check if relCache[relId] == nullptr and return E_RELNOTOPEN if true
+    if (relCache[relId] == nullptr)
+    {
+        return E_RELNOTOPEN;
+    }
+    // update the searchIndex value in the relCache for the relId to the searchIndex argument
+    relCache[relId]->searchIndex = *searchIndex;
+    return SUCCESS;
+}
+
+int RelCacheTable::resetSearchIndex(int relId)
+{
+    RecId *searchIndex = (struct RecId *)malloc(sizeof(RecId));
+    searchIndex->block = -1;
+    searchIndex->slot = -1;
+
+    return RelCacheTable::setSearchIndex(relId, searchIndex);
 }

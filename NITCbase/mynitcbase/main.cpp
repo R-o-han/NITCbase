@@ -111,21 +111,6 @@ int main(int argc, char *argv[])
   Disk disk_run;
   StaticBuffer buffer;
   OpenRelTable cache;
-  // printAttributeCatalog();
-  for (int relId = 0; relId <= 2; relId++)
-  {
-    RelCatEntry relCatBuf;
-    RelCacheTable::getRelCatEntry(relId, &relCatBuf);
-    printf("Relation: %s\n", relCatBuf.relName);
-    for (int attrIndex = 0; attrIndex < relCatBuf.numAttrs; attrIndex++)
-    {
-      AttrCatEntry attrCatBuf;
-      AttrCacheTable::getAttrCatEntry(relId, attrIndex, &attrCatBuf);
-      const char *attrType = attrCatBuf.attrType == NUMBER ? "NUM" : "STR";
-      printf("  %s: %s\n", attrCatBuf.attrName, attrType);
-    }
-    printf("\n");
-  }
 
-  return 0;
+  return FrontendInterface::handleFrontend(argc, argv);
 }
