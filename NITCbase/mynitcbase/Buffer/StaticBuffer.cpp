@@ -15,7 +15,7 @@ StaticBuffer::StaticBuffer()
         Disk::readBlock(buffer, i);
         for (int slot = 0; slot < BLOCK_SIZE; slot++, blockMapSlot++)
         {
-            blockAllocMap[blockMapSlot] = buffer[slot];
+            StaticBuffer::blockAllocMap[blockMapSlot] = buffer[slot];
         }
     }
 

@@ -251,7 +251,7 @@ int OpenRelTable::closeRel(int relId)
 
     /****** Releasing the Relation Cache entry of the relation ******/
 
-    if (RelCacheTable::relCache[relId]->dirty)
+    if (RelCacheTable::relCache[relId]->dirty == true)
     {
 
         /* Get the Relation Catalog entry from RelCacheTable::relCache
@@ -261,7 +261,7 @@ int OpenRelTable::closeRel(int relId)
         // declaring an object of RecBuffer class to write back to the buffer
         RecId recId = RelCacheTable::relCache[relId]->recId;
         RecBuffer relCatBlock(recId.block);
-        relCatBlock.setRecord(record, recId.slot);
+        relCatBlock.setRecord(record, RelCacheTable::relCache[relId]->recId.slot);
         // Write back to the buffer using relCatBlock.setRecord() with recId.slot
     }
     free(RelCacheTable::relCache[relId]);
@@ -269,7 +269,8 @@ int OpenRelTable::closeRel(int relId)
 
     // free the memory allocated in the attribute caches which was
     // allocated in the OpenRelTable::openRel() function
-    AttrCacheEntry *head = AttrCacheTable::attrCache[relId], *next = head->next;
+    AttrCacheEntry *head = AttrCacheTable::attrCache[relId];
+    AttrCacheEntry *next = head->next;
     while (next)
     {
         free(head);

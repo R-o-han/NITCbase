@@ -106,13 +106,13 @@ int RelCacheTable::setRelCatEntry(int relId, RelCatEntry *relCatBuf)
     {
         return E_RELNOTOPEN;
     }
-    memcpy(&relCache[relId]->relCatEntry, relCatBuf, sizeof(RelCatEntry));
+    memcpy(&(RelCacheTable::relCache[relId]->relCatEntry), relCatBuf, sizeof(RelCatEntry));
     // copy the relCatBuf to the corresponding Relation Catalog entry in
     // the Relation Cache Table.
 
     // set the dirty flag of the corresponding Relation Cache entry in
     // the Relation Cache Table.
-    relCache[relId]->dirty = true;
+    RelCacheTable::relCache[relId]->dirty = true;
     return SUCCESS;
 }
 
@@ -120,8 +120,8 @@ void RelCacheTable::relCatEntryToRecord(RelCatEntry *relCatEntry, union Attribut
 {
     strcpy(record[RELCAT_REL_NAME_INDEX].sVal, relCatEntry->relName);
     record[RELCAT_NO_ATTRIBUTES_INDEX].nVal = relCatEntry->numAttrs;
+    record[RELCAT_NO_RECORDS_INDEX].nVal = relCatEntry->numRecs;
     record[RELCAT_FIRST_BLOCK_INDEX].nVal = relCatEntry->firstBlk;
     record[RELCAT_LAST_BLOCK_INDEX].nVal = relCatEntry->lastBlk;
-    record[RELCAT_NO_RECORDS_INDEX].nVal = relCatEntry->numRecs;
     record[RELCAT_NO_SLOTS_PER_BLOCK_INDEX].nVal = relCatEntry->numSlotsPerBlk;
 }

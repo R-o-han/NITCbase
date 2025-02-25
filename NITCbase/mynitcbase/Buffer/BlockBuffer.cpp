@@ -96,7 +96,7 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum)
   unsigned char *bufferPtr;
   /* get the starting address of the buffer containing the block
      using loadBlockAndGetBufferPtr(&bufferPtr). */
-  int bufferNum = loadBlockAndGetBufferPtr(&bufferPtr);
+  int bufferNum = BlockBuffer::loadBlockAndGetBufferPtr(&bufferPtr);
   if (bufferNum != SUCCESS)
   {
     return bufferNum;
@@ -104,7 +104,9 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum)
   // if loadBlockAndGetBufferPtr(&bufferPtr) != SUCCESS
   // return the value returned by the call.
   HeadInfo head;
-  BlockBuffer::getHeader(&head);
+  int ret = BlockBuffer::getHeader(&head);
+  if (ret != SUCCESS)
+    return ret;
   /* get the header of the block using the getHeader() function */
   int attrCount = head.numAttrs;
   // get number of attributes in the block.
@@ -126,7 +128,7 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum)
   int recordSize = attrCount * ATTR_SIZE;
   unsigned char *slotPointer = bufferPtr + (32 + slotCount + (recordSize * slotNum));
   memcpy(slotPointer, rec, recordSize);
-  int ret = StaticBuffer::setDirtyBit(this->blockNum);
+  ret = StaticBuffer::setDirtyBit(this->blockNum);
   if (ret != SUCCESS)
   {
     cout << "something wrong with the setDirty function\n";
@@ -196,7 +198,8 @@ int RecBuffer::getSlotMap(unsigned char *slotMap)
   }
 
   struct HeadInfo head;
-  RecBuffer::getHeader(&head);
+  RecBuffer recordBlock(this->blockNum);
+  recordBlock.getHeader(&head);
   // get the header of the block using getHeader() function
 
   int slotCount = head.numSlots;
