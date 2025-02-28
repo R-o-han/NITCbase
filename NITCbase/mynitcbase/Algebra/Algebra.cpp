@@ -1,26 +1,7 @@
 #include "Algebra.h"
-
-#include <cstring>
 #include <iostream>
-using namespace std;
-
-bool isNumber(char *str)
-{
-    int len;
-    float ignore;
-    /*
-      sscanf returns the number of elements read, so if there is no float matching
-      the first %f, ret will be 0, else it'll be 1
-
-      %n gets the number of characters read. this scanf sequence will read the
-      first float ignoring all the whitespace before and after. and the number of
-      characters read that far will be stored in len. if len == strlen(str), then
-      the string only contains a float with/without whitespace. else, there's other
-      characters.
-    */
-    int ret = sscanf(str, "%f %n", &ignore, &len);
-    return ret == 1 && len == strlen(str);
-}
+#include <cstring>
+#include <stdlib.h>
 
 /* used to select all the records that satisfy a condition.
 the arguments of the function are
@@ -30,9 +11,35 @@ the arguments of the function are
 - op - the operator of the condition
 - strVal - the value that we want to compare against (represented as a string)
 */
+
+// will return if a string can be parsed as a floating point number
+bool isNumber(char *str)
+{
+
+    int len;
+    float ignore;
+
+    /*
+        sscanf returns the number of elements read, so if there is no float matching
+        the first %f, ret will be 0, else it'll be 1
+
+        %n gets the number of characters read. this scanf sequence will read the
+        first float ignoring all the whitespace before and after. and the number of
+        characters read that far will be stored in len. if len == strlen(str), then
+        the string only contains a float with/without whitespace. else, there's other
+        characters.
+    */
+
+    int ret = sscanf(str, "%f %n", &ignore, &len);
+
+    return ret == 1 && len == strlen(str);
+}
+
 int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr[ATTR_SIZE], int op, char strVal[ATTR_SIZE])
 {
-    int srcRelId = OpenRelTable::getRelId(srcRel); // we'll implement this later
+
+    int srcRelId = OpenRelTable::getRelId(srcRel);
+
     if (srcRelId == E_RELNOTOPEN)
     {
         return E_RELNOTOPEN;
@@ -40,20 +47,24 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
     AttrCatEntry attrCatEntry;
 
-    // get the attribute catalog entry for attr, using AttrCacheTable::getAttrcatEntry()
-    //    return E_ATTRNOTEXIST if it returns the error
-    if (AttrCacheTable::getAttrCatEntry(srcRelId, attr, &attrCatEntry) == E_ATTRNOTEXIST)
+    int ret = AttrCacheTable::getAttrCatEntry(srcRelId, attr, &attrCatEntry);
+
+    // std::cout<<"ret: "<<ret<<std::endl;
+    if (ret != SUCCESS)
     {
-        return E_ATTRNOTEXIST;
+        return ret;
     }
 
     /*** Convert strVal (string) to an attribute of data type NUMBER or STRING ***/
+
     int type = attrCatEntry.attrType;
+
     Attribute attrVal;
+
     if (type == NUMBER)
-    {
+    { // the isNumber() function is implemented below
         if (isNumber(strVal))
-        { // the isNumber() function is implemented below
+        {
             attrVal.nVal = atof(strVal);
         }
         else
@@ -70,26 +81,31 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
     // Before calling the search function, reset the search to start from the first hit
     // using RelCacheTable::resetSearchIndex()
-    RelCacheTable::resetSearchIndex(srcRelId);
+
     RelCatEntry relCatEntry;
+
     // get relCatEntry using RelCacheTable::getRelCatEntry()
+
     RelCacheTable::getRelCatEntry(srcRelId, &relCatEntry);
+
     /************************
-    The following code prints the contents of a relation directly to the output
+     The following code prints the contents of a relation directly to the output
     console. Direct console output is not permitted by the actual the NITCbase
     specification and the output can only be inserted into a new relation. We will
     be modifying it in the later stages to match the specification.
     ************************/
+    std::cout << "|";
 
-    printf("|");
-    for (int i = 0; i < relCatEntry.numAttrs; ++i)
+    for (int i = 0; i < relCatEntry.numAttrs; i++)
     {
         AttrCatEntry attrCatEntry;
-        // get attrCatEntry at offset i using AttrCacheTable::getAttrCatEntry()
         AttrCacheTable::getAttrCatEntry(srcRelId, i, &attrCatEntry);
-        printf(" %s |", attrCatEntry.attrName);
+
+        std::cout << " " << attrCatEntry.attrName << " |";
     }
-    printf("\n");
+    std::cout << std::endl;
+
+    RelCacheTable::resetSearchIndex(srcRelId);
 
     while (true)
     {
@@ -97,34 +113,37 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
         if (searchRes.block != -1 && searchRes.slot != -1)
         {
-            AttrCatEntry attrCatEntry;
-            RecBuffer BlockBuffer(searchRes.block);
-            HeadInfo blockHeader;
-            BlockBuffer.getHeader(&blockHeader);
-            // get the record at searchRes using BlockBuffer.getRecord
 
-            // print the attribute values in the same format as above
-            Attribute recordBuffer[blockHeader.numAttrs];
-            BlockBuffer.getRecord(recordBuffer, searchRes.slot);
+            Attribute record[relCatEntry.numAttrs];
+            RecBuffer recBuf(searchRes.block);
 
-            for (int i = 0; i < relCatEntry.numAttrs; ++i)
+            recBuf.getRecord(record, searchRes.slot);
+
+            // printing the values---->
+
+            std::cout << "|";
+
+            for (int i = 0; i < relCatEntry.numAttrs; i++)
             {
+                AttrCatEntry attrCatEntry;
                 AttrCacheTable::getAttrCatEntry(srcRelId, i, &attrCatEntry);
+
                 if (attrCatEntry.attrType == NUMBER)
                 {
-                    printf(" %d |", (int)recordBuffer[i].nVal);
+                    std::cout << " " << record[i].nVal << " |";
                 }
                 else
                 {
-                    printf(" %s |", recordBuffer[i].sVal);
+                    std::cout << " " << record[i].sVal << " |";
                 }
             }
-            printf("\n");
+            std::cout << std::endl;
+
+            //<---done printing the value
         }
         else
         {
-
-            // (all records over)
+            // no records that satisy the condition anymore
             break;
         }
     }
@@ -132,47 +151,49 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
     return SUCCESS;
 }
 
-// will return if a string can be parsed as a floating point number
-
 int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE])
 {
-    // if relName is equal to "RELATIONCAT" or "ATTRIBUTECAT"
-    // return E_NOTPERMITTED;
+
     if (strcmp(relName, RELCAT_RELNAME) == 0 || strcmp(relName, ATTRCAT_RELNAME) == 0)
-    {
         return E_NOTPERMITTED;
-    }
+
     // get the relation's rel-id using OpenRelTable::getRelId() method
+    int relId = OpenRelTable::getRelId(relName);
+
     // if relation is not open in open relation table, return E_RELNOTOPEN
     // (check if the value returned from getRelId function call = E_RELNOTOPEN)
-    int relId = OpenRelTable::getRelId(relName);
+
     if (relId == E_RELNOTOPEN)
-    {
-        return E_RELNOTOPEN;
-    }
+        return relId;
 
     // get the relation catalog entry from relation cache
     // (use RelCacheTable::getRelCatEntry() of Cache Layer)
     RelCatEntry relCatBuf;
     RelCacheTable::getRelCatEntry(relId, &relCatBuf);
+
     /* if relCatEntry.numAttrs != numberOfAttributes in relation,
        return E_NATTRMISMATCH */
     if (relCatBuf.numAttrs != nAttrs)
-    {
         return E_NATTRMISMATCH;
-    }
+
     // let recordValues[numberOfAttributes] be an array of type union Attribute
     Attribute recordValues[nAttrs];
+
     /*
         Converting 2D char array of record values to Attribute array recordValues
-     */
+    */
+
     // iterate through 0 to nAttrs-1: (let i be the iterator)
     for (int i = 0; i < nAttrs; i++)
     {
+
         // get the attr-cat entry for the i'th attribute from the attr-cache
         // (use AttrCacheTable::getAttrCatEntry())
+
         AttrCatEntry attrCatEntry;
+
         AttrCacheTable::getAttrCatEntry(relId, i, &attrCatEntry);
+
         int type = attrCatEntry.attrType;
 
         if (type == NUMBER)
@@ -181,9 +202,10 @@ int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE
             // (check this using isNumber() function)
             if (isNumber(record[i]))
             {
-                recordValues[i].nVal = atof(record[i]);
+
                 /* convert the char array to numeral and store it
                    at recordValues[i].nVal using atof() */
+                recordValues[i].nVal = atof(record[i]);
             }
             else
             {
@@ -192,13 +214,17 @@ int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE
         }
         else if (type == STRING)
         {
-            strcpy(recordValues[i].sVal, record[i]);
             // copy record[i] to recordValues[i].sVal
+            strcpy(recordValues[i].sVal, record[i]);
         }
     }
-    int retVal = BlockAccess::insert(relId, recordValues);
+
     // insert the record by calling BlockAccess::insert() function
     // let retVal denote the return value of insert call
+
+    int retVal = BlockAccess::insert(relId, recordValues);
+
+    // std::cout<<"we did it bro"<<std::endl;
 
     return retVal;
 }
