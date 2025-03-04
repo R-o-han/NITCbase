@@ -362,7 +362,7 @@ int BlockAccess::insert(int relId, Attribute *record)
         HeadInfo head;
         head.blockType = REC;
         head.pblock = head.rblock = -1;
-        head.lblock = -1;
+        head.lblock = prevBlockNum;
         head.numEntries = 0;
         head.numAttrs = relCatBuff.numAttrs;
         head.numSlots = relCatBuff.numSlotsPerBlk;
@@ -410,7 +410,7 @@ int BlockAccess::insert(int relId, Attribute *record)
         else
         {
             relCatBuff.firstBlk = rec_id.block;
-            RelCacheTable::setRelCatEntry(relId, &relCatBuff);
+
             // update first block field in the relation catalog entry to the
             // new block (using RelCacheTable::setRelCatEntry() function)
         }
