@@ -215,11 +215,11 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
         first record.
     */
     RelCacheTable::resetSearchIndex(srcRelId /* fill arguments */);
-    // AttrCacheTable::resetSearchIndex(srcRelId, attr /* fill arguments */);
+    AttrCacheTable::resetSearchIndex(srcRelId, attr /* fill arguments */);
 
     // read every record that satisfies the condition by repeatedly calling
     // BlockAccess::search() until there are no more records to be read
-
+    int count = 0;
     while (true /* BlockAccess::search() returns success */)
     {
         ret = BlockAccess::search(srcRelId, record, attr, attrVal, op);
@@ -228,6 +228,8 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
         // ret = BlockAccess::insert(targetRelId, record);
         ret = BlockAccess::insert(targetRelId, record);
+        // count++;
+        // std::cout << count << " inserted\n";
         if (ret != SUCCESS)
         {
             Schema::closeRel(targetRel);

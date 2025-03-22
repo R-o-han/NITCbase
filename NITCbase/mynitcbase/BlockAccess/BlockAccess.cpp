@@ -3,6 +3,8 @@
 #include <cstring>
 #include <iostream>
 
+static int comparision = 0;
+
 int BlockAccess::renameRelation(char oldName[ATTR_SIZE], char newName[ATTR_SIZE])
 {
     /* reset the searchIndex of the relation catalog using
@@ -278,7 +280,11 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
         */
 
         int cmpVal = compareAttrs(record[attrOffset], attrVal, attrCatBuf.attrType);
-
+        if (relId != RELCAT_RELID && relId != ATTRCAT_RELID)
+        {
+            ++comparision;
+            std::cout << comparision << ")Comparisons\n";
+        }
         if ((op == NE && cmpVal != 0) || // if op is "not equal to"
             (op == LT && cmpVal < 0) ||  // if op is "less than"
             (op == LE && cmpVal <= 0) || // if op is "less than or equal to"
@@ -520,26 +526,51 @@ int BlockAccess::search(int relId, Attribute *record, char attrName[ATTR_SIZE], 
     // Declare a variable called recid to store the searched record
     RecId recId;
 
-    /* search for the record id (recid) corresponding to the attribute with
-    attribute name attrName, with value attrval and satisfying the condition op
-    using linearSearch() */
+    /* get the attribute catalog entry from the attribute cache corresponding
+    to the relation with Id=relid and with attribute_name=attrName  */
 
-    recId = linearSearch(relId, attrName, attrVal, op);
+    AttrCatEntry attrCatEntry;
+    int ret = AttrCacheTable::getAttrCatEntry(relId, attrName, &attrCatEntry);
+    // if this call returns an error, return the appropriate error code
+    if (ret != SUCCESS)
+        return ret;
+    // get rootBlock from the attribute catalog entry
+    int rootBlock = attrCatEntry.rootBlock;
+    /* if Index does not exist for the attribute (check rootBlock == -1) */
+    if (rootBlock == -1)
+    {
+
+        /* search for the record id (recid) corresponding to the attribute with
+           attribute name attrName, with value attrval and satisfying the
+           condition op using linearSearch()
+        */
+        recId = BlockAccess::linearSearch(relId, attrName, attrVal, op);
+        std::cout << "USING LINEAR SEARCH!!!\n";
+    }
+
+    /* else */
+    else
+    {
+        // (index exists for the attribute)
+
+        /* search for the record id (recid) correspoding to the attribute with
+        attribute name attrName and with value attrval and satisfying the
+        condition op using BPlusTree::bPlusSearch() */
+        recId = BPlusTree::bPlusSearch(relId, attrName, attrVal, op);
+        std::cout << "USING BPLUS TREE FOR SEARCH!!!\n";
+    }
 
     // if there's no record satisfying the given condition (recId = {-1, -1})
-    //    return E_NOTFOUND;
-    if (recId.block == -1 && recId.slot == -1)
+    //     return E_NOTFOUND;
+    if (recId.block == -1 or recId.slot == -1)
         return E_NOTFOUND;
-
-    /* Copy the record with record id (recId) to the record buffer (record)
-       For this Instantiate a RecBuffer class object using recId and
+    /* Copy the record with record id (recId) to the record buffer (record).
+       For this, instantiate a RecBuffer class object by passing the recId and
        call the appropriate method to fetch the record
     */
-    RecBuffer blockBuffer(recId.block);
-
-    int ret = blockBuffer.getRecord(record, recId.slot);
-
-    return ret;
+    RecBuffer recBuff(recId.block);
+    recBuff.getRecord(record, recId.slot);
+    return SUCCESS;
 }
 
 int BlockAccess::deleteRelation(char relName[ATTR_SIZE])
