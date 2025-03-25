@@ -2,6 +2,7 @@
 
 // #include <iostream>
 #include <cstring>
+#include <iostream>
 
 unsigned char StaticBuffer::blocks[BUFFER_CAPACITY][BLOCK_SIZE];
 struct BufferMetaInfo StaticBuffer::metainfo[BUFFER_CAPACITY];
@@ -102,7 +103,7 @@ int StaticBuffer::getFreeBuffer(int blockNum)
         int maxTime = -1, idx;
         for (int bufferBlockIdx = 0; bufferBlockIdx < BUFFER_CAPACITY; bufferBlockIdx++)
         {
-            if (!metainfo[bufferNum].free && maxTime < metainfo[bufferBlockIdx].timeStamp)
+            if (!metainfo[bufferBlockIdx].free && maxTime < metainfo[bufferBlockIdx].timeStamp)
             {
                 maxTime = metainfo[bufferBlockIdx].timeStamp;
                 idx = bufferBlockIdx;
@@ -168,11 +169,14 @@ int StaticBuffer::getStaticBlockType(int blockNum)
 {
     // Check if blockNum is valid (non zero and less than number of disk blocks)
     // and return E_OUTOFBOUND if not valid.
-    if (blockNum < 0 or blockNum >= DISK_BLOCKS)
+
+    if (blockNum < 0 || blockNum >= DISK_BLOCKS)
         return E_OUTOFBOUND;
+
     // Access the entry in block allocation map corresponding to the blockNum argument
     // and return the block type after type casting to integer.
 
     int blockType = (int)blockAllocMap[blockNum];
+
     return blockType;
 }

@@ -390,7 +390,19 @@ int OpenRelTable::closeRel(int relId)
     /****** Releasing the Attribute Cache entry of the relation ******/
 
     delete RelCacheTable::relCache[relId];
-    freeAttrCacheEntry(AttrCacheTable::attrCache[relId]);
+    AttrCacheEntry *temp = nullptr;
+    for (auto entry = AttrCacheTable::attrCache[relId]; entry != nullptr; entry = temp)
+    {
+        if (entry->dirty)
+        {
+            Attribute record[ATTRCAT_NO_ATTRS];
+            AttrCacheTable::attrCatEntryToRecord(&(entry->attrCatEntry), record);
+            RecBuffer recBuffer(entry->recId.block);
+            recBuffer.setRecord(record, entry->recId.slot);
+        }
+        temp = entry->next;
+        delete entry;
+    }
 
     AttrCacheTable::attrCache[relId] = nullptr;
     RelCacheTable::relCache[relId] = nullptr;
