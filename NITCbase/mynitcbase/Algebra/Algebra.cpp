@@ -506,7 +506,7 @@ int Algebra::join(char srcRelation1[ATTR_SIZE], char srcRelation2[ATTR_SIZE], ch
 
     if (ret1 != SUCCESS)
     {
-        std::cout << "504: " << ret1 << "\n";
+        std::cout << "509: " << ret1 << "\n";
         return ret1;
     }
     if (ret2 != SUCCESS)
