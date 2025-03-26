@@ -4,6 +4,7 @@
 #include <iostream>
 
 static int comparision = 0;
+static int comparision1 = 0, comparision2 = 0;
 
 int BlockAccess::renameRelation(char oldName[ATTR_SIZE], char newName[ATTR_SIZE])
 {
